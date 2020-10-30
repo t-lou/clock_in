@@ -1,0 +1,1 @@
+# lite version of ProjectTimeManager for clock in
