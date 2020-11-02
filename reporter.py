@@ -35,7 +35,7 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
     duration_in_day = LogHandler.count_duration_per_day(logs)
 
     def format_cell(content: str):
-        return '\\intbl ' + content + ' \\cell'
+        return f'\\intbl {content} \\cell '
 
     def format_row(log):
         date_id = LogHandler.get_date_id(log['from'])
@@ -67,37 +67,38 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
         ) if timedelta_is >= timedelta_should else '-' + format_duration(
             timedelta_should - timedelta_is)
 
+    cells = [f'\\cellx{r}' for r in (800, 1800, 2800, 3800, 4900, 6000)]
+    table_head = '\\trowd\\pard\\trqc ' + ' '.join(cells)
+
     with open(path, 'w') as fs:
         fs.write('{\\rtf1\\ansi\\deff0' + os.linesep)
         fs.write('\\qr \\sb300 {\\loch %s}' %
                  (LogHandler.format_date(LogHandler.get_now()), ) + os.linesep)
-        fs.write('\\par \\pard \\sb300 \\plain {\\loch Dear %s,}' % (name, ) +
+        fs.write('\\par\\pard\\sb300\\plain {\\loch Dear %s,}' % (name, ) +
                  os.linesep)
         fs.write(
-            '\\par \\pard \\sb300 \\sa300 \\plain {\\loch your working time in %s from %s to %s is as follows:}'
+            '\\par\\pard\\sb300\\sa300\\plain {\\loch your working time in %s from %s to %s is as follows:}'
             % (LogHandler.get_month_id(logs[0]['from']),
                LogHandler.format_date(logs[0]['from']),
                LogHandler.format_date(logs[-1]['from'])) + os.linesep)
-        fs.write('\\par \\sb200 \\qc' + os.linesep)
+        fs.write('\\par\\pard\\sb100\\sa100\\qc' + os.linesep)
         fs.write(
-            '\\trowd \\trqc \\cellx700\\cellx1600\\cellx2500\\cellx3400\\cellx4400\\cellx5400'
-            + os.linesep)
-        fs.write(
-            '\\intbl Date \\cell \\intbl Start \\cell \\intbl End \\cell \\intbl Elapsed \\cell \\intbl Sum \\cell \\intbl Change \\cell \\row \\pard'
-            + os.linesep)
-        fs.write(
-            '\\trowd \\trqc \\cellx700\\cellx1600\\cellx2500\\cellx3400\\cellx4400\\cellx5400'
-            + os.linesep)
+            table_head.replace(
+                '\\cellx', '\\clbrdrt\\brdrth\\clbrdrb\\brdrs\\cellx').replace(
+                    '\\pard', '') + os.linesep)
+        fs.write(''.join([
+            f'\\intbl {title} \\cell '
+            for title in ['Date', 'Start', 'End', 'Elapsed', 'Sum', 'Change']
+        ]) + '\\row' + os.linesep)
 
-        for log in logs:
-            fs.write(
-                '\\trowd \\trqc \\cellx700\\cellx1600\\cellx2500\\cellx3400\\cellx4400\\cellx5400'
-                + os.linesep)
+        for id_log, log in enumerate(logs, 1):
+            fs.write((table_head if id_log < len(logs) else table_head.replace(
+                '\\cellx', '\\clbrdrb\\brdrth\\cellx')) + os.linesep)
             fs.write(format_row(log) + os.linesep)
-            fs.write('\\row \\pard' + os.linesep)
+            fs.write('\\row\\pard' + os.linesep)
 
         fs.write(
-            '\\par \\pard \\sb300 \\plain {\\loch The total working time for the %d days with time tracking is %s, the balance for this period is %s (with %s planned per day).}'
+            '\\par\\pard\\sb100\\plain {\\loch The total working time for the %d days with time tracking is %s, the balance for this period is %s (with %s planned per day).}'
             % (len(duration_in_day), format_duration(total_duration),
                format_duration_difference(
                    total_duration,
@@ -105,9 +106,9 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
                        hours=(should_hour_per_day * len(duration_in_day)))),
                format_duration(timedelta_should_per_day)) + os.linesep)
 
-        fs.write('\\par \\pard \\sb300 \\plain {\\loch Sincerely yours}' +
+        fs.write('\\par\\pard\\sb300\\plain {\\loch Sincerely yours}' +
                  os.linesep)
-        fs.write('\\par \\pard \\sb300 \\plain {\\loch time_tracker}' +
+        fs.write('\\par\\pard\\sb300\\plain {\\loch time_tracker}' +
                  os.linesep)
         fs.write('}' + os.linesep)
 

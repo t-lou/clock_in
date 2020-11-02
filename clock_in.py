@@ -12,6 +12,7 @@ def main():
     except:
         handler.update_session()
         LogHandler.merge_session()
+        LogHandler.print_progress_today()
 
 
 if __name__ == '__main__':
