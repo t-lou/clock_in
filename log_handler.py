@@ -9,7 +9,8 @@ kFormat = '%Y-%m-%d %H:%M:%S'
 class LogHandler(object):
     def __init__(self):
         self.prep_log_dir()
-        self.now = self.get_now()
+        self.start = self.get_now()
+        self.last_printed_hours = -1
 
     @classmethod
     def format_datetime(cls, datetime: datetime.datetime):
@@ -33,10 +34,13 @@ class LogHandler(object):
         return os.path.join(cls.get_log_dir(), 'temp')
 
     def update_session(self):
-        self.write_month_logs([{
-            'from': self.now,
-            'to': self.get_now()
-        }], 'temp')
+        now = self.get_now()
+        assert self.start <= now, 'back to future'
+        self.write_month_logs([{'from': self.start, 'to': now}], 'temp')
+        elapsed_hours = (now - self.start).seconds // 3600
+        if elapsed_hours > self.last_printed_hours:
+            self.print_progress_today()
+            self.last_printed_hours = elapsed_hours
 
     @classmethod
     def merge_session(cls):
@@ -121,3 +125,18 @@ class LogHandler(object):
     def count_total_duration(logs):
         return functools.reduce(lambda s, d: s + d,
                                 (log['to'] - log['from'] for log in logs))
+
+    @classmethod
+    def print_progress_today(cls):
+        formatter = cls.format_date
+        now = cls.get_now()
+        str_today = formatter(now)
+        logs = cls.load_month_logs(
+            cls.get_month_id(now)) + cls.load_month_logs('temp')
+        logs = [log for log in logs if formatter(log['from']) == str_today]
+        total_time = datetime.timedelta()
+        for log in logs:
+            total_time += log['to'] - log['from']
+        print(
+            f'working time on {str_today} until {cls.format_clocktime(now)} is {total_time}'
+        )

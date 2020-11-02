@@ -19,8 +19,8 @@ def select_log():
 def select_output():
     tkinter.Tk().withdraw()
     ext = '.rtf'
-    filename = tkinter.filedialog.asksaveasfilename(initialdir='.',
-                                                    filetypes=((ext, ext), ))
+    filename = tkinter.filedialog.asksaveasfilename(
+        initialdir='.', filetypes=((ext, ext), ))
     assert bool(filename), 'file not selected'
     if not filename.endswith(ext):
         filename += ext
@@ -101,8 +101,8 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
             % (len(duration_in_day), format_duration(total_duration),
                format_duration_difference(
                    total_duration,
-                   datetime.timedelta(hours=(should_hour_per_day *
-                                             len(duration_in_day)))),
+                   datetime.timedelta(
+                       hours=(should_hour_per_day * len(duration_in_day)))),
                format_duration(timedelta_should_per_day)) + os.linesep)
 
         fs.write('\\par \\pard \\sb300 \\plain {\\loch Sincerely yours}' +
@@ -119,18 +119,20 @@ def get_config():
         width = 20
         height = 2
         root = tkinter.Tk()
-        tkinter.Label(root,
-                      text='name',
-                      width=width,
-                      height=height,
-                      justify=tkinter.LEFT).pack(side=tkinter.TOP)
+        tkinter.Label(
+            root,
+            text='name',
+            width=width,
+            height=height,
+            justify=tkinter.LEFT).pack(side=tkinter.TOP)
         text_field_name = tkinter.Text(root, height=height, width=width)
         text_field_name.pack(side=tkinter.TOP)
-        tkinter.Label(root,
-                      text='hours per day',
-                      width=width,
-                      height=height,
-                      justify=tkinter.LEFT).pack(side=tkinter.TOP)
+        tkinter.Label(
+            root,
+            text='hours per day',
+            width=width,
+            height=height,
+            justify=tkinter.LEFT).pack(side=tkinter.TOP)
         text_field_dura = tkinter.Text(root, height=height, width=width)
         text_field_dura.pack(side=tkinter.TOP)
 
