@@ -109,7 +109,7 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
 
         fs.write('\\par\\pard\\sb300\\plain {\\loch Sincerely yours}' +
                  os.linesep)
-        fs.write('\\par\\pard\\sb300\\plain {\\loch time_tracker}' +
+        fs.write('\\par\\pard\\sb300\\plain {\\loch clock_in}' +
                  os.linesep)
         fs.write('}' + os.linesep)
 
