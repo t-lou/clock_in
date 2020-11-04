@@ -52,14 +52,26 @@ class LogHandler(object):
     def get_log_session(cls):
         return os.path.join(cls.get_log_dir(), cls.get_session_name())
 
-    def update_session(self):
-        now = self.get_now()
-        assert self.start <= now, 'back to future'
+    def update_session(self, end=None):
+        if end is None:
+            end = self.get_now()
+        assert self.start <= end, 'back to future'
+        self.split_overnight(end)
         self.write_month_logs([{
             'from': self.start,
-            'to': now
+            'to': end
         }], self.get_session_name())
         self.print_progress_today()
+
+    def split_overnight(self, now):
+        if self.format_date(self.start) != self.format_date(now):
+            start = datetime.datetime(year=now.year,
+                                      month=now.month,
+                                      day=now.day)
+            self.update_session(end=(start - datetime.timedelta(seconds=1)))
+            self.merge_session()
+            self.start = start
+            self.duration_past = now - start
 
     @classmethod
     def merge_session(cls):

@@ -4,7 +4,6 @@ from log_handler import LogHandler
 def main():
     LogHandler.merge_session()
     handler = LogHandler()
-    handler.print_progress_today(force=True)
     try:
         while True:
             handler.update_session()
