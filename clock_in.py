@@ -1,18 +1,18 @@
-import time
 from log_handler import LogHandler
 
 
 def main():
     LogHandler.merge_session()
     handler = LogHandler()
+    handler.print_progress_today(force=True)
     try:
         while True:
             handler.update_session()
-            time.sleep(60 * 5)
+            LogHandler.sleep()
     except:
         handler.update_session()
         LogHandler.merge_session()
-        LogHandler.print_progress_today()
+        handler.print_progress_today(force=True)
 
 
 if __name__ == '__main__':

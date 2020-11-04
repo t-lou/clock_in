@@ -1,24 +1,39 @@
 import os
+import time
 import json
 import datetime
 import functools
-
-kFormat = '%Y-%m-%d %H:%M:%S'
 
 
 class LogHandler(object):
     def __init__(self):
         self.prep_log_dir()
         self.start = self.get_now()
-        self.last_printed_hours = -1
+        self.duration_past = self.get_duration_today_before()
+
+    @classmethod
+    def get_sleep_seconds(cls):
+        return 60 * 5
+
+    @classmethod
+    def get_sleep_print(cls):
+        return 60 * 60
+
+    @classmethod
+    def sleep(cls):
+        time.sleep(cls.get_sleep_seconds())
+
+    @classmethod
+    def get_log_format(cls):
+        return '%Y-%m-%d %H:%M:%S'
 
     @classmethod
     def format_datetime(cls, datetime: datetime.datetime):
-        return datetime.strftime(kFormat)
+        return datetime.strftime(cls.get_log_format())
 
     @classmethod
     def deformat_datetime(cls, string: str):
-        return datetime.datetime.strptime(string, kFormat)
+        return datetime.datetime.strptime(string, cls.get_log_format())
 
     @classmethod
     def get_log_dir(cls):
@@ -30,22 +45,26 @@ class LogHandler(object):
             os.makedirs(cls.get_log_dir())
 
     @classmethod
+    def get_session_name(cls):
+        return 'temp'
+
+    @classmethod
     def get_log_session(cls):
-        return os.path.join(cls.get_log_dir(), 'temp')
+        return os.path.join(cls.get_log_dir(), cls.get_session_name())
 
     def update_session(self):
         now = self.get_now()
         assert self.start <= now, 'back to future'
-        self.write_month_logs([{'from': self.start, 'to': now}], 'temp')
-        elapsed_hours = (now - self.start).seconds // 3600
-        if elapsed_hours > self.last_printed_hours:
-            self.print_progress_today()
-            self.last_printed_hours = elapsed_hours
+        self.write_month_logs([{
+            'from': self.start,
+            'to': now
+        }], self.get_session_name())
+        self.print_progress_today()
 
     @classmethod
     def merge_session(cls):
         if os.path.isfile(cls.get_log_session()):
-            session = cls.load_month_logs('temp')
+            session = cls.load_month_logs(cls.get_session_name())
             assert len(session) == 1, 'temp must have length 1'
             datetime = session[0]['from']
             logs = cls.load_month_logs(cls.get_month_id(datetime)) + session
@@ -127,16 +146,25 @@ class LogHandler(object):
                                 (log['to'] - log['from'] for log in logs))
 
     @classmethod
-    def print_progress_today(cls):
+    def get_duration_today_before(cls):
         formatter = cls.format_date
         now = cls.get_now()
         str_today = formatter(now)
-        logs = cls.load_month_logs(
-            cls.get_month_id(now)) + cls.load_month_logs('temp')
-        logs = [log for log in logs if formatter(log['from']) == str_today]
-        total_time = datetime.timedelta()
-        for log in logs:
-            total_time += log['to'] - log['from']
-        print(
-            f'working time on {str_today} until {cls.format_clocktime(now)} is {total_time}'
-        )
+        logs = [
+            log for log in cls.load_month_logs(cls.get_month_id(now))
+            if formatter(log['from']) == str_today
+        ]
+        return datetime.timedelta() if len(logs) == 0 else functools.reduce(
+            lambda s, d: s + d, (log['to'] - log['from'] for log in logs))
+
+    def print_progress_today(self, force=False):
+        now = self.get_now()
+        assert self.start <= now, 'back to future'
+        duration = self.duration_past + (now - self.start)
+        secs_in_hour = duration.seconds % self.get_sleep_print()
+        if force or min(secs_in_hour,
+                        self.get_sleep_print() -
+                        secs_in_hour) < self.get_sleep_seconds() // 2:
+            str_date = self.format_date(now)
+            str_now = self.format_clocktime(now)
+            print(f'working time on {str_date} until {str_now} is {duration}')
