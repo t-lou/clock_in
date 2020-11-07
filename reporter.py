@@ -43,10 +43,10 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
         date = date_id if date_id not in done else ''
         start = LogHandler.format_clocktime(log['from'])
         end = LogHandler.format_clocktime(log['to'])
-        elapsed = format_duration(log['to'] - log['from'])
-        elapsed_in_day = format_duration(
+        elapsed = LogHandler.format_duration(log['to'] - log['from'])
+        elapsed_in_day = LogHandler.format_duration(
             duration_in_day[date_id]) if date_id not in done else ''
-        delta = format_duration_difference(
+        delta = LogHandler.format_duration_difference(
             duration_in_day[date_id],
             timedelta_should_per_day) if date_id not in done else ''
         content = os.linesep.join([
@@ -55,17 +55,6 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
         ])
         done.add(date_id)
         return content
-
-    def format_duration(timedelta):
-        secs = timedelta.seconds
-        return '{:02}:{:02}:{:02}'.format(secs // 3600, (secs % 3600) // 60,
-                                          (secs % 60))
-
-    def format_duration_difference(timedelta_is, timedelta_should):
-        return format_duration(
-            timedelta_is - timedelta_should
-        ) if timedelta_is >= timedelta_should else '-' + format_duration(
-            timedelta_should - timedelta_is)
 
     cells = [f'\\cellx{r}' for r in (800, 1800, 2800, 3800, 4900, 6000)]
     table_head = '\\trowd\\pard\\trqc ' + ' '.join(cells)
@@ -100,12 +89,14 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
 
         fs.write(
             '\\par\\pard\\sb100\\plain {\\loch The total working time for the %d days with time tracking is %s, the balance for this period is %s (with %s planned per day).}'
-            % (len(duration_in_day), format_duration(total_duration),
-               format_duration_difference(
-                   total_duration,
-                   datetime.timedelta(hours=(should_hour_per_day *
-                                             len(duration_in_day)))),
-               format_duration(timedelta_should_per_day)) + os.linesep)
+            %
+            (len(duration_in_day), LogHandler.format_duration(total_duration),
+             LogHandler.format_duration_difference(
+                 total_duration,
+                 datetime.timedelta(hours=(should_hour_per_day *
+                                           len(duration_in_day)))),
+             LogHandler.format_duration(timedelta_should_per_day)) +
+            os.linesep)
 
         fs.write('\\par\\pard\\sb300\\plain {\\loch Sincerely yours}' +
                  os.linesep)

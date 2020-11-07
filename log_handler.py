@@ -133,6 +133,20 @@ class LogHandler(object):
     def get_month_now(cls):
         return cls.get_month_id(cls.get_now())
 
+    @classmethod
+    def format_duration(cls, timedelta: datetime.timedelta):
+        secs = timedelta.seconds
+        return '{:02}:{:02}:{:02}'.format(secs // 3600, (secs % 3600) // 60,
+                                          (secs % 60))
+
+    @classmethod
+    def format_duration_difference(cls, timedelta_is: datetime.timedelta,
+                                   timedelta_should: datetime.timedelta):
+        return cls.format_duration(
+            timedelta_is - timedelta_should
+        ) if timedelta_is >= timedelta_should else '-' + cls.format_duration(
+            timedelta_should - timedelta_is)
+
     @staticmethod
     def check_logs(logs):
         last = None
@@ -179,4 +193,5 @@ class LogHandler(object):
                         secs_in_hour) < self.get_sleep_seconds() // 2:
             str_date = self.format_date(now)
             str_now = self.format_clocktime(now)
-            print(f'working time on {str_date} until {str_now} is {duration}')
+            str_duration = self.format_duration(duration)
+            print(f'duration on {str_date} until {str_now} is {str_duration}')
