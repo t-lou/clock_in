@@ -23,6 +23,12 @@ class LogHandler(object):
     def sleep(cls):
         time.sleep(cls.get_sleep_seconds())
 
+    def sleep_to_hour(self, now=datetime.datetime):
+        duration_secs = (self.duration_past + (now - self.start)).seconds
+        left_secs = (duration_secs // 3600) * 3600 + 3600 - duration_secs
+        if 0 < left_secs < self.get_sleep_seconds():
+            time.sleep(left_secs)
+
     @classmethod
     def get_log_format(cls):
         return '%Y-%m-%d %H:%M:%S'
@@ -57,6 +63,7 @@ class LogHandler(object):
             end = self.get_now()
         assert self.start <= end, 'back to future'
         self.split_overnight(end)
+        self.sleep_to_hour(end)
         self.write_month_logs([{
             'from': self.start,
             'to': end
