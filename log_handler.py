@@ -113,12 +113,12 @@ class LogHandler(object):
         cls.check_logs(logs)
         if month_id is None:
             month_id = cls.get_month_now()
+        str_log = json.dumps(
+            [{key: cls.format_datetime(log[key])
+              for key in ('from', 'to')} for log in logs],
+            indent=' ')
         with open(os.path.join(cls.get_log_dir(), month_id), 'w') as fs:
-            fs.write(
-                json.dumps([{
-                    key: cls.format_datetime(log[key])
-                    for key in ('from', 'to')
-                } for log in logs]))
+            fs.write(str_log)
 
     @classmethod
     def format_clocktime(cls, date: datetime.datetime):
