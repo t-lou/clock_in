@@ -202,3 +202,21 @@ class LogHandler(object):
             str_now = self.format_clocktime(now)
             str_duration = self.format_duration(duration)
             print(f'duration on {str_date} until {str_now} is {str_duration}')
+
+    @classmethod
+    def extend_until_now(cls):
+        allowed_interval_secs = 3 * 60 * 60
+        now = cls.get_now()
+        str_today = cls.format_date(now)
+        month_id = cls.get_month_id(now)
+        full_logs = cls.load_month_logs(month_id)
+        logs = [
+            log for log in full_logs
+            if cls.format_date(log['from']) == str_today
+        ]
+        assert bool(logs), 'no session today'
+        last_end = logs[-1]['to']
+        assert last_end < now, 'still in last session r u kidding?'
+        assert (now - last_end).seconds < allowed_interval_secs, 'too late'
+        full_logs[-1]['to'] = now
+        cls.write_month_logs(full_logs, month_id)
