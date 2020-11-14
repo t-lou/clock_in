@@ -2,6 +2,7 @@ import os
 import time
 import json
 import datetime
+import shutil
 import functools
 
 
@@ -55,8 +56,12 @@ class LogHandler(object):
         return 'temp'
 
     @classmethod
+    def get_log_path(cls, filename: str):
+        return os.path.join(cls.get_log_dir(), filename)
+
+    @classmethod
     def get_log_session(cls):
-        return os.path.join(cls.get_log_dir(), cls.get_session_name())
+        return cls.get_log_path(cls.get_session_name())
 
     def update_session(self, end=None):
         if end is None:
@@ -99,7 +104,7 @@ class LogHandler(object):
         if month_id is None:
             month_id = cls.get_month_now()
         content = []
-        path = os.path.join(cls.get_log_dir(), month_id)
+        path = cls.get_log_path(month_id)
         if os.path.isfile(path):
             with open(path) as fs:
                 content = [{
@@ -117,7 +122,7 @@ class LogHandler(object):
             [{key: cls.format_datetime(log[key])
               for key in ('from', 'to')} for log in logs],
             indent=' ')
-        with open(os.path.join(cls.get_log_dir(), month_id), 'w') as fs:
+        with open(cls.get_log_path(month_id), 'w') as fs:
             fs.write(str_log)
 
     @classmethod
@@ -220,3 +225,23 @@ class LogHandler(object):
         assert (now - last_end).seconds < allowed_interval_secs, 'too late'
         full_logs[-1]['to'] = now
         cls.write_month_logs(full_logs, month_id)
+
+    @classmethod
+    def get_backup_name(cls, filename: str):
+        return filename + '.backup'
+
+    @classmethod
+    def check_backup(cls, month_id: str):
+        logs_original = cls.load_month_logs(month_id)
+        logs_backup = cls.load_month_logs(cls.get_backup_name(month_id))
+        assert len(logs_original) >= len(logs_backup), 'wrong backup'
+        for i, _ in enumerate(logs_backup):
+            assert logs_original[i] == logs_backup[i], 'wrong backup session'
+
+    @classmethod
+    def backup(cls, month_id: str = None):
+        if month_id is None:
+            month_id = cls.get_month_id(cls.get_now())
+        cls.check_backup(month_id)
+        shutil.copy(cls.get_log_path(month_id),
+                    cls.get_log_path(cls.get_backup_name(month_id)))

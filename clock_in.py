@@ -3,6 +3,7 @@ from log_handler import LogHandler
 
 def main():
     LogHandler.merge_session()
+    LogHandler.backup()
     handler = LogHandler()
     try:
         while True:
