@@ -86,12 +86,31 @@ class LogHandler(object):
             self.duration_past = now - start
 
     @classmethod
+    def merge_logs(cls, logs1: list, logs2: list):
+        cls.check_logs(logs1)
+        cls.check_logs(logs2)
+        if len(logs1) == 0:
+            assert len(logs2) > 0, 'both logs emtpy'
+            return logs2
+
+        merged = logs1[:]
+        if bool(logs2):
+            assert logs1[-1]['to'] <= logs2[0]['from'], 'two logs inconsistent'
+            delta = logs2[0]['from'] - logs1[-1]['to']
+            if delta.days == 0 and delta.seconds < 15 * 60:
+                merged[-1]['to'] = logs2[0]['to']
+            else:
+                merged += logs2
+        return merged
+
+    @classmethod
     def merge_session(cls):
         if os.path.isfile(cls.get_log_session()):
             session = cls.load_month_logs(cls.get_session_name())
             assert len(session) == 1, 'temp must have length 1'
             datetime = session[0]['from']
-            logs = cls.load_month_logs(cls.get_month_id(datetime)) + session
+            logs = cls.merge_logs(
+                cls.load_month_logs(cls.get_month_id(datetime)), session)
             cls.write_month_logs(logs)
             os.remove(cls.get_log_session())
 
@@ -160,7 +179,7 @@ class LogHandler(object):
             timedelta_should - timedelta_is)
 
     @staticmethod
-    def check_logs(logs):
+    def check_logs(logs: list):
         last = None
         for log in logs:
             assert last is None or last <= log['from'], 'sessions inconsistant'
@@ -235,13 +254,14 @@ class LogHandler(object):
         logs_original = cls.load_month_logs(month_id)
         logs_backup = cls.load_month_logs(cls.get_backup_name(month_id))
         assert len(logs_original) >= len(logs_backup), 'wrong backup'
-        for i, _ in enumerate(logs_backup):
+        for i in range(min(len(logs_backup), len(logs_original) - 1)):
             assert logs_original[i] == logs_backup[i], 'wrong backup session'
 
     @classmethod
     def backup(cls, month_id: str = None):
         if month_id is None:
             month_id = cls.get_month_id(cls.get_now())
-        cls.check_backup(month_id)
-        shutil.copy(cls.get_log_path(month_id),
-                    cls.get_log_path(cls.get_backup_name(month_id)))
+        if os.path.isfile(cls.get_log_path(month_id)):
+            cls.check_backup(month_id)
+            shutil.copy(cls.get_log_path(month_id),
+                        cls.get_log_path(cls.get_backup_name(month_id)))
