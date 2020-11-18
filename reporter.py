@@ -3,6 +3,7 @@ import datetime
 import json
 import tkinter
 import tkinter.filedialog
+import functools
 from log_handler import LogHandler
 
 
@@ -31,8 +32,10 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
     assert len(logs) > 0, 'empty log'
     done = set()
     timedelta_should_per_day = datetime.timedelta(hours=should_hour_per_day)
-    total_duration = LogHandler.count_total_duration(logs)
     duration_in_day = LogHandler.count_duration_per_day(logs)
+    total_duration = functools.reduce(
+        lambda s, d: s + d,
+        (duration for duration in duration_in_day.values()))
 
     def format_cell(content: str):
         return f'\\intbl {content} \\cell '

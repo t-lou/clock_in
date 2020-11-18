@@ -5,6 +5,9 @@ import datetime
 import shutil
 import functools
 
+# after how many hours one has to make take a pause, non-positive to deactivate
+kHoursMandatoryPause = 6
+
 
 class LogHandler(object):
     def __init__(self):
@@ -192,15 +195,18 @@ class LogHandler(object):
             LogHandler.get_date_id(log['from']): datetime.timedelta()
             for log in logs
         }
+        is_pause_mandatory = kHoursMandatoryPause is not None and kHoursMandatoryPause > 0
+        if is_pause_mandatory:
+            secs_without_pause = int(kHoursMandatoryPause * 3600.0)
+            secs_with_pause = secs_without_pause + 3600
         for log in logs:
+            secs = (log['to'] - log['from']).seconds
+            if is_pause_mandatory:
+                secs = (secs // secs_with_pause) * secs_without_pause + (
+                    secs % secs_with_pause)
             duration_in_day[LogHandler.get_date_id(
-                log['from'])] += log['to'] - log['from']
+                log['from'])] += datetime.timedelta(seconds=secs)
         return duration_in_day
-
-    @staticmethod
-    def count_total_duration(logs):
-        return functools.reduce(lambda s, d: s + d,
-                                (log['to'] - log['from'] for log in logs))
 
     @classmethod
     def get_duration_today_before(cls):
