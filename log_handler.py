@@ -167,8 +167,8 @@ class LogHandler(object):
     @classmethod
     def format_duration(cls, timedelta: datetime.timedelta):
         secs = timedelta.seconds
-        return '{:02}:{:02}:{:02}'.format(secs // 3600, (secs % 3600) // 60,
-                                          (secs % 60))
+        return '{:02}:{:02}:{:02}'.format(secs // 3600 + timedelta.days * 24,
+                                          (secs % 3600) // 60, (secs % 60))
 
     @classmethod
     def format_duration_difference(cls, timedelta_is: datetime.timedelta,
