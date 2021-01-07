@@ -220,7 +220,7 @@ class LogHandler(object):
         return datetime.timedelta() if len(logs) == 0 else functools.reduce(
             lambda s, d: s + d, (log['to'] - log['from'] for log in logs))
 
-    def print_progress_today(self, force=False):
+    def get_progress_today(self, force=False) -> str:
         now = self.get_now()
         assert self.start <= now, 'back to future'
         duration = self.duration_past + (now - self.start)
@@ -231,7 +231,14 @@ class LogHandler(object):
             str_date = self.format_date(now)
             str_now = self.format_clocktime(now)
             str_duration = self.format_duration(duration)
-            print(f'duration on {str_date} until {str_now} is {str_duration}')
+            return f'duration on {str_date} until {str_now} is {str_duration}'
+        else:
+            return None
+
+    def print_progress_today(self, force=False):
+        progress = self.get_progress_today(force=force)
+        if progress is not None:
+            print(progress)
 
     @classmethod
     def extend_until_now(cls):
