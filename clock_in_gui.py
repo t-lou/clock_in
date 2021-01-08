@@ -19,7 +19,7 @@ def close():
 def func_update():
     while True:
         handler.update_session()
-        handler.print_progress_today(force=True)
+        handler.print_progress_today(force=False)
         LogHandler.sleep()
 
 
