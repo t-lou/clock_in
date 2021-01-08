@@ -3,9 +3,6 @@ import multiprocessing
 
 from log_handler import LogHandler
 
-base_window = tkinter.Tk()
-base_window.title('clock-in')
-
 LogHandler.merge_session()
 LogHandler.backup()
 handler = LogHandler()
@@ -26,10 +23,14 @@ def func_update():
         LogHandler.sleep()
 
 
-thread_update = multiprocessing.Process(target=func_update)
-thread_update.start()
+if __name__ == '__main__':
+    base_window = tkinter.Tk()
+    base_window.title('clock-in')
 
-tkinter.Button(base_window, text='end', height=5, width=80,
-               command=close).pack()
+    thread_update = multiprocessing.Process(target=func_update)
+    thread_update.start()
 
-tkinter.mainloop()
+    tkinter.Button(base_window, text='end', height=5, width=80,
+                   command=close).pack()
+
+    tkinter.mainloop()
