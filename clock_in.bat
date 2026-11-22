@@ -1,1 +1,2 @@
-python clock_in.py
+@echo off
+call "%~dp0run_python.bat" "clock_in.py"

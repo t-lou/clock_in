@@ -1,8 +1,60 @@
 # Clock-in
 
-A small command-line and GUI time tracker for recording working sessions.
-Each session is saved locally in JSON, so the tracker does not require a
-server or account.
+A small time tracker with a simple GUI and terminal version. It saves sessions
+locally, so you do not need an account or an internet connection.
+
+## Windows: quick start
+
+1. Install Python 3 from [python.org/downloads](https://www.python.org/downloads/).
+   During setup, keep the Python Launcher option enabled. The standard
+   installer includes Tkinter, which this app uses for its windows.
+2. Download this repository as a ZIP using **Code** > **Download ZIP**, then
+   extract it to a folder where you can save files (for example, Documents).
+   Do not run it from inside the ZIP or from a read-only folder.
+3. Open the extracted `clock_in` folder and double-click **`clock_in_gui.bat`**.
+   The tracker window will open. Leave its console window open while tracking.
+4. Click **Stop tracking** or close the tracker window when you finish. The
+   current session is saved automatically.
+
+No packages or command-line setup are required. The `.bat` launchers find the
+repository folder automatically and use Python 3 from the Python Launcher or
+from PATH.
+
+### Other Windows actions
+
+- Double-click **`reporter.bat`** to create a monthly report. The first time,
+  enter your name and planned hours per day, then choose a monthly log in
+  `logs` and where to save the report.
+- Double-click **`clock_in.bat`** to run the terminal tracker instead. Stop it
+  with <kbd>Ctrl</kbd>+<kbd>C</kbd>.
+- If the app was interrupted, double-click **`fix_broken_session.bat`** to
+  close the incomplete session using its last saved update.
+- If you forgot to stop tracking after a clean exit, double-click
+  **`extend.bat`** promptly. It can extend today's last session only within
+  three hours of its end.
+
+If a launcher says Python 3 cannot be found, install Python 3 and enable the
+Python Launcher (or add Python to PATH), then try again.
+
+## Linux and macOS
+
+Run commands from the repository directory, because log files are stored in
+the `logs/` directory relative to it.
+
+Start the terminal tracker:
+
+```sh
+python3 clock_in.py
+```
+
+Or start the GUI:
+
+```sh
+python3 clock_in_gui.py
+```
+
+Stop the terminal tracker with <kbd>Ctrl</kbd>+<kbd>C</kbd> or click **Stop
+tracking** (or close the window) in the GUI.
 
 ## How it works
 
@@ -19,42 +71,9 @@ that cross midnight are split across the two calendar days.
 The programs use only the Python standard library. They require Python 3 and
 Tkinter for the GUI and report dialogs.
 
-Run commands from the repository directory, because log files are stored in
-the `logs/` directory relative to the current working directory.
-
-## Starting a tracker
-
-### Terminal
-
-On Linux or macOS:
-
-```sh
-python3 clock_in.py
-```
-
-On Windows:
-
-```cmd
-python clock_in.py
-```
-
-You can also start `clock_in.bat` from Windows.
-
-Stop the terminal tracker with <kbd>Ctrl</kbd>+<kbd>C</kbd>. The current
-session is merged into the monthly log before the program exits.
-
-### GUI
-
-```sh
-python3 clock_in_gui.py
-```
-
-On Windows, `clock_in_gui.py` can also be started by double-clicking it.
-Click the **end** button to stop tracking.
-
 ## Log files
 
-The tracker creates this structure in the working directory:
+The tracker creates this structure in the repository folder:
 
 ```text
 logs/
@@ -65,20 +84,12 @@ logs/
 ```
 
 Monthly files contain JSON objects with `from` and `to` timestamps. Backup
-files are created before the monthly log is updated.
-
-## Repairing or extending a session
-
-Run these programs only from the repository directory:
-
-- `python3 fix_broken_session.py` closes an incomplete `temp` session using
-  its last internally recorded update.
-- `python3 extend.py` extends the last session of the current day to the
-  current time, but only when the session ended less than three hours ago.
-
-These commands should not be needed after a clean exit.
+files are created before the monthly log is updated. Keep the repository
+folder, including `logs`, if you want to keep your tracking history.
 
 ## Generating a report
+
+On Windows, double-click `reporter.bat`. On Linux or macOS, run:
 
 ```sh
 python3 reporter.py
@@ -101,8 +112,10 @@ counted with a mandatory unpaid-break deduction:
 ## Troubleshooting
 
 - After an interrupted or wrongly closed tracker, run
-  `fix_broken_session.py` and verify the monthly log in `logs/`.
-- If work was accidentally omitted after a clean exit, run `extend.py`
-  promptly. It has a strict three-hour limit.
+  `fix_broken_session.bat` on Windows or `python3 fix_broken_session.py` on
+  Linux/macOS, then verify the monthly log in `logs/`.
+- If work was accidentally omitted after a clean exit, run `extend.bat` on
+  Windows or `python3 extend.py` on Linux/macOS promptly. It has a strict
+  three-hour limit.
 - A correctly closed session prints its final progress and leaves no active
   `logs/temp` file.

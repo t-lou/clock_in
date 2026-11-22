@@ -30,6 +30,12 @@ if __name__ == "__main__":
     thread_update = threading.Thread(target=func_update, daemon=True)
     thread_update.start()
 
-    tkinter.Button(base_window, text="end", height=5, width=80, command=close).pack()
+    tkinter.Label(
+        base_window, text="Tracking is active. Stop tracking when you finish."
+    ).pack(padx=24, pady=(20, 10))
+    tkinter.Button(
+        base_window, text="Stop tracking", height=2, width=24, command=close
+    ).pack(padx=24, pady=(0, 20))
 
+    base_window.protocol("WM_DELETE_WINDOW", close)
     tkinter.mainloop()
