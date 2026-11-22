@@ -1,39 +1,108 @@
-# lite version of ProjectTimeManager for clock in
+# Clock-in
 
-Open computer -> start clock-in -> start working -> end clock-in -> stop working.
-This way should be more convenient for counting the working time, than writing the time down with paper or Excel.
+A small command-line and GUI time tracker for recording working sessions.
+Each session is saved locally in JSON, so the tracker does not require a
+server or account.
 
-# Programs
+## How it works
 
-- clock_in.py
+1. Start the tracker when you begin working.
+2. The tracker records the current session every five minutes.
+3. Stop the tracker when you finish working.
+4. Optionally generate an RTF report for a month.
 
-Main program for Linux terminal and Windows CMD. Progress is printed; end with ctrl-c.
+Sessions started and stopped less than 15 minutes apart are merged. Sessions
+that cross midnight are split across the two calendar days.
 
-- clock_in.bat
+## Requirements
 
-Windows batch file for starting the program. Progress is printed; end with ctrl-c.
+The programs use only the Python standard library. They require Python 3 and
+Tkinter for the GUI and report dialogs.
 
-- clock_in_gui.py
+Run commands from the repository directory, because log files are stored in
+the `logs/` directory relative to the current working directory.
 
-Starter with GUI button for ending. This can be started with Linux terminal, Windows CMD or double-click in Windows File Browser.
-Progress is printed; end with button.
+## Starting a tracker
 
-- extend.py
+### Terminal
 
-When the program is ended but you continue to work, for example when you do paper work without computer or a colleague asks for a favour when you planed to leave, this program will extend the last working session until now.
+On Linux or macOS:
 
-- fix_broken_session.py
+```sh
+python3 clock_in.py
+```
 
-When the program is wrongly stopped: terminal closed, process kill, computer power empty or program not closed in Windows after several hours, this script ends the last working session to the last internally logged time point (every 5 min). This has no effect when the last working session is closed correctly.
+On Windows:
 
-- reporter.py
+```cmd
+python clock_in.py
+```
 
-Open one log file (for one month) and generate report in RTF. If one working session is longer than 6 hours, a break until 1 hour will be counted.
+You can also start `clock_in.bat` from Windows.
 
-# Attention
+Stop the terminal tracker with <kbd>Ctrl</kbd>+<kbd>C</kbd>. The current
+session is merged into the monthly log before the program exits.
 
-This was not tested and used in Linux. In Windows, clock_in.py in CMD, clock_in.bat and clock_in_gui.py all have the closure problem.
-After some hours of use, ctrl-c and end button may not be received correctly. The reason is unknown, sometimes clicking on the CMD helps.
-After closing the program, it is recommanded to check the log file or execute "fix_broken_session.py" and "extend.py" in sequence.
+### GUI
 
-When the program is correctly closed, the progress (current time and duration) is printed again without extra error message.
+```sh
+python3 clock_in_gui.py
+```
+
+On Windows, `clock_in_gui.py` can also be started by double-clicking it.
+Click the **end** button to stop tracking.
+
+## Log files
+
+The tracker creates this structure in the working directory:
+
+```text
+logs/
+  temp                 # active session while tracking
+  YYYY-MM              # monthly working log
+  YYYY-MM.backup       # backup of the monthly log
+.config                # reporter name and planned hours per day
+```
+
+Monthly files contain JSON objects with `from` and `to` timestamps. Backup
+files are created before the monthly log is updated.
+
+## Repairing or extending a session
+
+Run these programs only from the repository directory:
+
+- `python3 fix_broken_session.py` closes an incomplete `temp` session using
+  its last internally recorded update.
+- `python3 extend.py` extends the last session of the current day to the
+  current time, but only when the session ended less than three hours ago.
+
+These commands should not be needed after a clean exit.
+
+## Generating a report
+
+```sh
+python3 reporter.py
+```
+
+The reporter opens dialogs for:
+
+1. entering your name and planned working hours per day;
+2. selecting a monthly log under `logs/`; and
+3. choosing the destination for an RTF report.
+
+The report includes start and end times, elapsed time, daily totals, and the
+difference from the planned daily hours. Sessions longer than six hours are
+counted with a mandatory unpaid-break deduction:
+
+- six hours of tracked time counts as six hours;
+- later hours count with one hour deducted as a break;
+- the deduction applies in repeated six-hour work-plus-break cycles.
+
+## Troubleshooting
+
+- After an interrupted or wrongly closed tracker, run
+  `fix_broken_session.py` and verify the monthly log in `logs/`.
+- If work was accidentally omitted after a clean exit, run `extend.py`
+  promptly. It has a strict three-hour limit.
+- A correctly closed session prints its final progress and leaves no active
+  `logs/temp` file.
