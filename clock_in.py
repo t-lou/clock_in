@@ -9,11 +9,11 @@ def main():
         while True:
             handler.update_session()
             LogHandler.sleep()
-    except:
+    except KeyboardInterrupt:
         handler.update_session()
         LogHandler.merge_session()
         handler.print_progress_today(force=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -35,7 +35,7 @@ class LogHandler(object):
 
     @classmethod
     def get_log_format(cls):
-        return '%Y-%m-%d %H:%M:%S'
+        return "%Y-%m-%d %H:%M:%S"
 
     @classmethod
     def format_datetime(cls, datetime: datetime.datetime):
@@ -47,7 +47,7 @@ class LogHandler(object):
 
     @classmethod
     def get_log_dir(cls):
-        return 'logs'
+        return "logs"
 
     @classmethod
     def prep_log_dir(cls):
@@ -56,7 +56,7 @@ class LogHandler(object):
 
     @classmethod
     def get_session_name(cls):
-        return 'temp'
+        return "temp"
 
     @classmethod
     def get_log_path(cls, filename: str):
@@ -69,20 +69,17 @@ class LogHandler(object):
     def update_session(self, end=None):
         if end is None:
             end = self.get_now()
-        assert self.start <= end, 'back to future'
+        assert self.start <= end, "back to future"
         self.split_overnight(end)
         self.sleep_to_hour(end)
-        self.write_month_logs([{
-            'from': self.start,
-            'to': end
-        }], self.get_session_name())
+        self.write_month_logs(
+            [{"from": self.start, "to": end}], self.get_session_name()
+        )
         self.print_progress_today()
 
     def split_overnight(self, now):
         if self.format_date(self.start) != self.format_date(now):
-            start = datetime.datetime(year=now.year,
-                                      month=now.month,
-                                      day=now.day)
+            start = datetime.datetime(year=now.year, month=now.month, day=now.day)
             self.update_session(end=(start - datetime.timedelta(seconds=1)))
             self.merge_session()
             self.start = start
@@ -93,15 +90,15 @@ class LogHandler(object):
         cls.check_logs(logs1)
         cls.check_logs(logs2)
         if len(logs1) == 0:
-            assert len(logs2) > 0, 'both logs emtpy'
+            assert len(logs2) > 0, "both logs emtpy"
             return logs2
 
         merged = logs1[:]
         if bool(logs2):
-            assert logs1[-1]['to'] <= logs2[0]['from'], 'two logs inconsistent'
-            delta = logs2[0]['from'] - logs1[-1]['to']
+            assert logs1[-1]["to"] <= logs2[0]["from"], "two logs inconsistent"
+            delta = logs2[0]["from"] - logs1[-1]["to"]
             if delta.days == 0 and delta.seconds < 15 * 60:
-                merged[-1]['to'] = logs2[0]['to']
+                merged[-1]["to"] = logs2[0]["to"]
             else:
                 merged += logs2
         return merged
@@ -110,10 +107,11 @@ class LogHandler(object):
     def merge_session(cls):
         if os.path.isfile(cls.get_log_session()):
             session = cls.load_month_logs(cls.get_session_name())
-            assert len(session) == 1, 'temp must have length 1'
-            datetime = session[0]['from']
+            assert len(session) == 1, "temp must have length 1"
+            datetime = session[0]["from"]
             logs = cls.merge_logs(
-                cls.load_month_logs(cls.get_month_id(datetime)), session)
+                cls.load_month_logs(cls.get_month_id(datetime)), session
+            )
             cls.write_month_logs(logs)
             os.remove(cls.get_log_session())
 
@@ -129,10 +127,10 @@ class LogHandler(object):
         path = cls.get_log_path(month_id)
         if os.path.isfile(path):
             with open(path) as fs:
-                content = [{
-                    key: cls.deformat_datetime(session[key])
-                    for key in ('from', 'to')
-                } for session in json.loads(fs.read())]
+                content = [
+                    {key: cls.deformat_datetime(session[key]) for key in ("from", "to")}
+                    for session in json.loads(fs.read())
+                ]
         return content
 
     @classmethod
@@ -141,27 +139,30 @@ class LogHandler(object):
         if month_id is None:
             month_id = cls.get_month_now()
         str_log = json.dumps(
-            [{key: cls.format_datetime(log[key])
-              for key in ('from', 'to')} for log in logs],
-            indent=' ')
-        with open(cls.get_log_path(month_id), 'w') as fs:
+            [
+                {key: cls.format_datetime(log[key]) for key in ("from", "to")}
+                for log in logs
+            ],
+            indent=" ",
+        )
+        with open(cls.get_log_path(month_id), "w") as fs:
             fs.write(str_log)
 
     @classmethod
     def format_clocktime(cls, date: datetime.datetime):
-        return date.strftime('%H:%M:%S')
+        return date.strftime("%H:%M:%S")
 
     @classmethod
     def format_date(cls, date: datetime.datetime):
-        return date.strftime('%Y-%m-%d')
+        return date.strftime("%Y-%m-%d")
 
     @classmethod
     def get_date_id(cls, date: datetime.datetime):
-        return date.strftime('%m-%d')
+        return date.strftime("%m-%d")
 
     @classmethod
     def get_month_id(cls, date: datetime.datetime):
-        return date.strftime('%Y-%m')
+        return date.strftime("%Y-%m")
 
     @classmethod
     def get_month_now(cls):
@@ -170,42 +171,48 @@ class LogHandler(object):
     @classmethod
     def format_duration(cls, timedelta: datetime.timedelta):
         secs = timedelta.seconds
-        return '{:02}:{:02}:{:02}'.format(secs // 3600 + timedelta.days * 24,
-                                          (secs % 3600) // 60, (secs % 60))
+        return "{:02}:{:02}:{:02}".format(
+            secs // 3600 + timedelta.days * 24, (secs % 3600) // 60, (secs % 60)
+        )
 
     @classmethod
-    def format_duration_difference(cls, timedelta_is: datetime.timedelta,
-                                   timedelta_should: datetime.timedelta):
-        return cls.format_duration(
-            timedelta_is - timedelta_should
-        ) if timedelta_is >= timedelta_should else '-' + cls.format_duration(
-            timedelta_should - timedelta_is)
+    def format_duration_difference(
+        cls, timedelta_is: datetime.timedelta, timedelta_should: datetime.timedelta
+    ):
+        return (
+            cls.format_duration(timedelta_is - timedelta_should)
+            if timedelta_is >= timedelta_should
+            else "-" + cls.format_duration(timedelta_should - timedelta_is)
+        )
 
     @staticmethod
     def check_logs(logs: list):
         last = None
         for log in logs:
-            assert last is None or last <= log['from'], 'sessions inconsistant'
-            assert log['from'] <= log['to'], f'inconsistent in session {log}'
-            last = log['to']
+            assert last is None or last <= log["from"], "sessions inconsistant"
+            assert log["from"] <= log["to"], f"inconsistent in session {log}"
+            last = log["to"]
 
     @classmethod
     def count_duration_per_day(cls, logs: list):
         duration_in_day = {
-            LogHandler.get_date_id(log['from']): datetime.timedelta()
-            for log in logs
+            LogHandler.get_date_id(log["from"]): datetime.timedelta() for log in logs
         }
-        is_pause_mandatory = kHoursMandatoryPause is not None and kHoursMandatoryPause > 0
+        is_pause_mandatory = (
+            kHoursMandatoryPause is not None and kHoursMandatoryPause > 0
+        )
         if is_pause_mandatory:
             secs_without_pause = int(kHoursMandatoryPause * 3600.0)
             secs_with_pause = secs_without_pause + 3600
         for log in logs:
-            secs = (log['to'] - log['from']).seconds
+            secs = (log["to"] - log["from"]).seconds
             if is_pause_mandatory:
                 secs = (secs // secs_with_pause) * secs_without_pause + (
-                    secs % secs_with_pause)
-            duration_in_day[LogHandler.get_date_id(
-                log['from'])] += datetime.timedelta(seconds=secs)
+                    secs % secs_with_pause
+                )
+            duration_in_day[LogHandler.get_date_id(log["from"])] += datetime.timedelta(
+                seconds=secs
+            )
         return duration_in_day
 
     @classmethod
@@ -214,24 +221,32 @@ class LogHandler(object):
         now = cls.get_now()
         str_today = formatter(now)
         logs = [
-            log for log in cls.load_month_logs(cls.get_month_id(now))
-            if formatter(log['from']) == str_today
+            log
+            for log in cls.load_month_logs(cls.get_month_id(now))
+            if formatter(log["from"]) == str_today
         ]
-        return datetime.timedelta() if len(logs) == 0 else functools.reduce(
-            lambda s, d: s + d, (log['to'] - log['from'] for log in logs))
+        return (
+            datetime.timedelta()
+            if len(logs) == 0
+            else functools.reduce(
+                lambda s, d: s + d, (log["to"] - log["from"] for log in logs)
+            )
+        )
 
     def get_progress_today(self, force=False) -> str:
         now = self.get_now()
-        assert self.start <= now, 'back to future'
+        assert self.start <= now, "back to future"
         duration = self.duration_past + (now - self.start)
         secs_in_hour = duration.seconds % self.get_sleep_print()
-        if force or min(secs_in_hour,
-                        self.get_sleep_print() -
-                        secs_in_hour) < self.get_sleep_seconds() // 2:
+        if (
+            force
+            or min(secs_in_hour, self.get_sleep_print() - secs_in_hour)
+            < self.get_sleep_seconds() // 2
+        ):
             str_date = self.format_date(now)
             str_now = self.format_clocktime(now)
             str_duration = self.format_duration(duration)
-            return f'duration on {str_date} until {str_now} is {str_duration}'
+            return f"duration on {str_date} until {str_now} is {str_duration}"
         else:
             return None
 
@@ -247,28 +262,25 @@ class LogHandler(object):
         str_today = cls.format_date(now)
         month_id = cls.get_month_id(now)
         full_logs = cls.load_month_logs(month_id)
-        logs = [
-            log for log in full_logs
-            if cls.format_date(log['from']) == str_today
-        ]
-        assert bool(logs), 'no session today'
-        last_end = logs[-1]['to']
-        assert last_end < now, 'still in last session r u kidding?'
-        assert (now - last_end).seconds < allowed_interval_secs, 'too late'
-        full_logs[-1]['to'] = now
+        logs = [log for log in full_logs if cls.format_date(log["from"]) == str_today]
+        assert bool(logs), "no session today"
+        last_end = logs[-1]["to"]
+        assert last_end < now, "still in last session r u kidding?"
+        assert (now - last_end).seconds < allowed_interval_secs, "too late"
+        full_logs[-1]["to"] = now
         cls.write_month_logs(full_logs, month_id)
 
     @classmethod
     def get_backup_name(cls, filename: str):
-        return filename + '.backup'
+        return filename + ".backup"
 
     @classmethod
     def check_backup(cls, month_id: str):
         logs_original = cls.load_month_logs(month_id)
         logs_backup = cls.load_month_logs(cls.get_backup_name(month_id))
-        assert len(logs_original) >= len(logs_backup), 'wrong backup'
+        assert len(logs_original) >= len(logs_backup), "wrong backup"
         for i in range(min(len(logs_backup), len(logs_original) - 1)):
-            assert logs_original[i] == logs_backup[i], 'wrong backup session'
+            assert logs_original[i] == logs_backup[i], "wrong backup session"
 
     @classmethod
     def backup(cls, month_id: str = None):
@@ -276,5 +288,7 @@ class LogHandler(object):
             month_id = cls.get_month_id(cls.get_now())
         if os.path.isfile(cls.get_log_path(month_id)):
             cls.check_backup(month_id)
-            shutil.copy(cls.get_log_path(month_id),
-                        cls.get_log_path(cls.get_backup_name(month_id)))
+            shutil.copy(
+                cls.get_log_path(month_id),
+                cls.get_log_path(cls.get_backup_name(month_id)),
+            )

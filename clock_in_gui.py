@@ -23,14 +23,13 @@ def func_update():
         LogHandler.sleep()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     base_window = tkinter.Tk()
-    base_window.title('clock-in')
+    base_window.title("clock-in")
 
     thread_update = multiprocessing.Process(target=func_update)
     thread_update.start()
 
-    tkinter.Button(base_window, text='end', height=5, width=80,
-                   command=close).pack()
+    tkinter.Button(base_window, text="end", height=5, width=80, command=close).pack()
 
     tkinter.mainloop()
