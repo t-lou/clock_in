@@ -8,8 +8,12 @@ from log_handler import LogHandler
 
 
 def select_log():
-    tkinter.Tk().withdraw()
-    filename = tkinter.filedialog.askopenfilename(initialdir=LogHandler.get_log_dir())
+    root = tkinter.Tk()
+    root.withdraw()
+    filename = tkinter.filedialog.askopenfilename(
+        initialdir=LogHandler.get_log_dir(), parent=root
+    )
+    root.destroy()
     assert bool(filename), "file not selected"
     logs = LogHandler.load_month_logs(os.path.basename(filename))
     LogHandler.check_logs(logs)
@@ -17,11 +21,13 @@ def select_log():
 
 
 def select_output():
-    tkinter.Tk().withdraw()
+    root = tkinter.Tk()
+    root.withdraw()
     ext = ".rtf"
     filename = tkinter.filedialog.asksaveasfilename(
-        initialdir=".", filetypes=((ext, ext),)
+        initialdir=".", filetypes=((ext, ext),), parent=root
     )
+    root.destroy()
     assert bool(filename), "file not selected"
     if not filename.endswith(ext):
         filename += ext
@@ -71,7 +77,7 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
     cells = [f"\\cellx{r}" for r in (800, 1800, 2800, 3800, 4900, 6000)]
     table_head = "\\trowd\\pard\\trqc " + " ".join(cells)
 
-    with open(path, "w") as fs:
+    with open(path, "w", encoding="utf-8") as fs:
         fs.write("{\\rtf1\\ansi\\deff0" + os.linesep)
         fs.write(
             "\\qr \\sb300 {\\loch %s}" % (LogHandler.format_date(LogHandler.get_now()),)
@@ -140,9 +146,14 @@ def report(path: str, logs: list, name: str, should_hour_per_day: float):
 
 def get_config():
     path = ".config"
-    if not os.path.isfile(path) or set(json.loads(open(path).read()).keys()) != set(
-        ["name", "hours"]
-    ):
+    config = None
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as fs:
+            stored_config = json.load(fs)
+        if set(stored_config) == {"name", "hours"}:
+            config = stored_config
+
+    if config is None:
         width = 20
         height = 2
         root = tkinter.Tk()
@@ -160,7 +171,7 @@ def get_config():
         def exec(event):
             name = text_field_name.get("1.0", tkinter.END).strip()
             hours = text_field_dura.get("1.0", tkinter.END).strip()
-            with open(path, "w") as fs:
+            with open(path, "w", encoding="utf-8") as fs:
                 fs.write(json.dumps({"name": name, "hours": float(hours)}))
             root.destroy()
 
@@ -169,7 +180,10 @@ def get_config():
         text_field_name.focus()
         tkinter.mainloop()
 
-    return json.loads(open(path).read())
+    if config is None:
+        with open(path, encoding="utf-8") as fs:
+            config = json.load(fs)
+    return config
 
 
 if __name__ == "__main__":

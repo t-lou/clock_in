@@ -28,7 +28,7 @@ class LogHandler(object):
         time.sleep(cls.get_sleep_seconds())
 
     def sleep_to_hour(self, now=datetime.datetime):
-        duration_secs = (self.duration_past + (now - self.start)).seconds
+        duration_secs = int((self.duration_past + (now - self.start)).total_seconds())
         left_secs = (duration_secs // 3600) * 3600 + 3600 - duration_secs
         if 0 < left_secs < self.get_sleep_seconds():
             time.sleep(left_secs)
@@ -52,7 +52,7 @@ class LogHandler(object):
     @classmethod
     def prep_log_dir(cls):
         if not os.path.isdir(cls.get_log_dir()):
-            os.makedirs(cls.get_log_dir())
+            os.makedirs(cls.get_log_dir(), exist_ok=True)
 
     @classmethod
     def get_session_name(cls):
@@ -83,7 +83,7 @@ class LogHandler(object):
             self.update_session(end=(start - datetime.timedelta(seconds=1)))
             self.merge_session()
             self.start = start
-            self.duration_past = now - start
+            self.duration_past = datetime.timedelta()
 
     @classmethod
     def merge_logs(cls, logs1: list, logs2: list):
@@ -93,7 +93,7 @@ class LogHandler(object):
             assert len(logs2) > 0, "both logs emtpy"
             return logs2
 
-        merged = logs1[:]
+        merged = [dict(log) for log in logs1]
         if bool(logs2):
             assert logs1[-1]["to"] <= logs2[0]["from"], "two logs inconsistent"
             delta = logs2[0]["from"] - logs1[-1]["to"]
@@ -108,9 +108,9 @@ class LogHandler(object):
         if os.path.isfile(cls.get_log_session()):
             session = cls.load_month_logs(cls.get_session_name())
             assert len(session) == 1, "temp must have length 1"
-            datetime = session[0]["from"]
+            session_start = session[0]["from"]
             logs = cls.merge_logs(
-                cls.load_month_logs(cls.get_month_id(datetime)), session
+                cls.load_month_logs(cls.get_month_id(session_start)), session
             )
             cls.write_month_logs(logs)
             os.remove(cls.get_log_session())
@@ -126,7 +126,7 @@ class LogHandler(object):
         content = []
         path = cls.get_log_path(month_id)
         if os.path.isfile(path):
-            with open(path) as fs:
+            with open(path, encoding="utf-8") as fs:
                 content = [
                     {key: cls.deformat_datetime(session[key]) for key in ("from", "to")}
                     for session in json.loads(fs.read())
@@ -145,7 +145,7 @@ class LogHandler(object):
             ],
             indent=" ",
         )
-        with open(cls.get_log_path(month_id), "w") as fs:
+        with open(cls.get_log_path(month_id), "w", encoding="utf-8") as fs:
             fs.write(str_log)
 
     @classmethod
@@ -205,14 +205,23 @@ class LogHandler(object):
             secs_without_pause = int(kHoursMandatoryPause * 3600.0)
             secs_with_pause = secs_without_pause + 3600
         for log in logs:
-            secs = (log["to"] - log["from"]).seconds
-            if is_pause_mandatory:
-                secs = (secs // secs_with_pause) * secs_without_pause + (
-                    secs % secs_with_pause
-                )
-            duration_in_day[LogHandler.get_date_id(log["from"])] += datetime.timedelta(
-                seconds=secs
-            )
+            segment_start = log["from"]
+            while segment_start < log["to"]:
+                next_midnight = datetime.datetime(
+                    segment_start.year,
+                    segment_start.month,
+                    segment_start.day,
+                ) + datetime.timedelta(days=1)
+                segment_end = min(log["to"], next_midnight)
+                secs = int((segment_end - segment_start).total_seconds())
+                if is_pause_mandatory:
+                    secs = (secs // secs_with_pause) * secs_without_pause + (
+                        secs % secs_with_pause
+                    )
+                date_id = LogHandler.get_date_id(segment_start)
+                duration_in_day.setdefault(date_id, datetime.timedelta())
+                duration_in_day[date_id] += datetime.timedelta(seconds=secs)
+                segment_start = segment_end
         return duration_in_day
 
     @classmethod
